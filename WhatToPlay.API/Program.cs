@@ -3,10 +3,21 @@ using WhatToPlay.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+const string CORS_POLICY_allowedSpecificOrigins = "_allowedSpecificOrigins";
+
 // Add services to the container.
 builder.Services.AddTransient<IHttpClientService, SteamHttpClientService>();
-
 builder.Services.AddControllers();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: CORS_POLICY_allowedSpecificOrigins,
+        policy =>
+        {
+            // TODO: properly configure origin urls pre go-live
+            policy.WithOrigins("*");
+        });
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -22,6 +33,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(CORS_POLICY_allowedSpecificOrigins);
 
 app.UseAuthorization();
 

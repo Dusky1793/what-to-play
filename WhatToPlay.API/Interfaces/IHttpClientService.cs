@@ -2,6 +2,7 @@
 {
     public interface IHttpClientService
     {
-        TResponse SendRequest<TResponse>(string endPoint, string steamId, string[] extraParams = null);
+        Task<string> SendRequest(string endPoint, string steamId, string[] extraParams = null);
+        Task<string> SendOldApiRequest(string url, string[] extraParams = null);
     }
 }
