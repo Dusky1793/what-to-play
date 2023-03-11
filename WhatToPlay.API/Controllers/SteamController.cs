@@ -43,11 +43,8 @@ namespace WhatToPlay.API.Controllers
         }
 
         [HttpGet(Name = "GetAchievementDetailsByAppId")]
-        public GetAchievementDetailsByAppIdResponse GetAchievementDetailsByAppId()//string steamId, string appId)
+        public GetAchievementDetailsByAppIdResponse GetAchievementDetailsByAppId(string steamId, string appId)
         {
-            var steamId = "76561198865252681";
-            var appId = "1446780";
-
             var endPoint = "ISteamUserStats/GetPlayerAchievements/v0001/";
             var resultNewApi = _httpClientService.SendRequest(endPoint, steamId,
                 new string[]
