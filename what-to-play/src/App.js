@@ -1,11 +1,13 @@
 import logo from './logo.svg';
 import './App.css';
-import Games from './components/Games';
+import React from 'react';
+import Home from './components/Home';
+import { Routes, Route } from 'react-router-dom';
 
-function App() {
+export function App() {
   return (
     <div>
-      <Games />
+      <Home />
     </div>
   );
 }
