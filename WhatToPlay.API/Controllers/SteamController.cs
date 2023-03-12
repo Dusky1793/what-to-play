@@ -17,16 +17,20 @@ namespace WhatToPlay.API.Controllers
 
         private readonly ILogger<SteamController> _logger;
         private IHttpClientService _httpClientService;
+        private IEncryptionService _encryptionService;
 
-        public SteamController(ILogger<SteamController> logger, IHttpClientService httpClientService)
+        public SteamController(ILogger<SteamController> logger, IHttpClientService httpClientService, IEncryptionService encryptionService)
         {
             _logger = logger;
             _httpClientService = httpClientService;
+            _encryptionService = encryptionService;
         }
 
         [HttpGet(Name = "GetAllOwnedGames")]
-        public GetAllOwnedGamesResponse GetAllOwnedGames(string steamId)
+        public GetAllOwnedGamesResponse GetAllOwnedGames(string encryptedSteamId)
         {
+            var steamId = _encryptionService.Decrypt(encryptedSteamId);
+
             var endPoint = "IPlayerService/GetOwnedGames/v0001/";
             var result = _httpClientService.SendRequest(endPoint, steamId, 
                 new string[] 
@@ -43,8 +47,10 @@ namespace WhatToPlay.API.Controllers
         }
 
         [HttpGet(Name = "GetAchievementDetailsByAppId")]
-        public GetAchievementDetailsByAppIdResponse GetAchievementDetailsByAppId(string steamId, string appId)
+        public GetAchievementDetailsByAppIdResponse GetAchievementDetailsByAppId(string encryptedSteamId, string appId)
         {
+            var steamId = _encryptionService.Decrypt(encryptedSteamId);
+
             var endPoint = "ISteamUserStats/GetPlayerAchievements/v0001/";
             var resultNewApi = _httpClientService.SendRequest(endPoint, steamId,
                 new string[]

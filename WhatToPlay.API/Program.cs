@@ -16,7 +16,9 @@ builder.Services.AddCors(options =>
         policy =>
         {
             // TODO: properly configure origin urls pre go-live
-            policy.WithOrigins("*");
+            policy.WithOrigins("*")
+            .AllowAnyMethod()
+            .AllowAnyHeader();
         });
 });
 

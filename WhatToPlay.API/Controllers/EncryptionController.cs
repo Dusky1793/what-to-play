@@ -17,7 +17,7 @@ namespace WhatToPlay.API.Controllers
         }
 
         [HttpPost(Name = "EncryptSteamId")]
-        public string EncryptSteamId(string steamId)
+        public string EncryptSteamId([FromBody] string steamId)
         {
             return _encryptionService.Encrypt(steamId);
         }

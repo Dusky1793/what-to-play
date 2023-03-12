@@ -6,8 +6,8 @@ function Games() {
     const [games, setGames] = useState([]);
 
     useEffect(() => {
-        const steamId = localStorage.getItem("steamId"); // TODO: self reminder to make sure this is encrypted
-        fetch(`http://localhost:5220/Steam/GetAllOwnedGames?steamId=${steamId}`)
+        const steamId = localStorage.getItem("steamId");
+        fetch(`http://localhost:5220/Steam/GetAllOwnedGames?encryptedSteamId=${steamId}`)
             .then(res => res.json())
             .then((result) => {
                 setGames(result.response.games);

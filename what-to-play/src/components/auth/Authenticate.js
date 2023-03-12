@@ -9,8 +9,21 @@ function Authenticate() {
 
     useEffect(() => {
         const steamOpenIdUrl = searchParams.get("openid.claimed_id").split("/");
-        localStorage.setItem("steamId", steamOpenIdUrl[5]); // TODO: call the backend api and encrypt this steam id
-        navigate("/Games");
+        const steamId = steamOpenIdUrl[5];
+
+        fetch(`http://localhost:5220/Encryption/EncryptSteamId`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(steamId)
+            })
+            .then(res => res.json())
+            .then((result) => {
+                localStorage.setItem("steamId", result);
+                navigate("/Games");
+            });
     }, []);
 
     return (
