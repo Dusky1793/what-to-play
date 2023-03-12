@@ -61,21 +61,44 @@ namespace WhatToPlay.API.Controllers
             var requestUrl = $"http://steamcommunity.com/profiles/{steamId}/stats/{appId}/?xml=1";
             var resultOldApi = _httpClientService.SendOldApiRequest(requestUrl);
 
-            Task.WaitAll(resultNewApi, resultOldApi);
+            try
+            {
+                Task.WaitAll(resultNewApi, resultOldApi);
+            }
+            catch(HttpRequestException ex) { }
+            catch(Exception ex) { }
 
-            var oldApiResult = resultOldApi.Result;
+            string newApiResult = string.Empty;
+            if (resultNewApi.IsCompletedSuccessfully)
+            {
+                newApiResult = resultNewApi.Result;
+            }
 
             // deserialize old api response (xml)
             var xmlSerializer = new XmlSerializer(typeof(GetOldApiPlayerStatsResponse));
 
-            var oldApiResponse = new GetOldApiPlayerStatsResponse();
-            using (var reader = new StringReader(oldApiResult))
+            var oldApiResponse = new GetOldApiPlayerStatsResponse()
             {
-                oldApiResponse = (GetOldApiPlayerStatsResponse)xmlSerializer.Deserialize(reader);
+                achievements = new OldApiAchievements
+                {
+                    achievements = new List<OldApiAchievement>()
+                }
+            };
+            if (resultOldApi.IsCompletedSuccessfully) // the old api doesn't give a BAD_REQUEST upon failure
+            {
+                var oldApiResult = resultOldApi.Result;
+                using (var reader = new StringReader(oldApiResult))
+                {
+                    try
+                    {
+                        oldApiResponse = (GetOldApiPlayerStatsResponse)xmlSerializer.Deserialize(reader);
+                    }
+                    catch(Exception ex) { } // suppress parse exception, sometimes steam would fail returing data inconsistently
+                }
             }
 
             // deserialize new api response (json)
-            var newApiResponse = JsonConvert.DeserializeObject<ISteamUserStatsGetPlayerAchievementsResponse>(resultNewApi.Result);
+            var newApiResponse = JsonConvert.DeserializeObject<ISteamUserStatsGetPlayerAchievementsResponse>(newApiResult);
 
             // left join details from the new and old api responses to form the final response
             var response = new GetAchievementDetailsByAppIdResponse
@@ -86,14 +109,20 @@ namespace WhatToPlay.API.Controllers
                 gameLogo = oldApiResponse?.game?.gameLogo,
                 gameLogoSmall = oldApiResponse?.game?.gameLogoSmall,
                 privacyState = oldApiResponse?.privacyState,
-                visibilityState = oldApiResponse?.visibilityState
+                visibilityState = oldApiResponse?.visibilityState,
+                IsNewApiSuccessful = resultNewApi.IsCompletedSuccessfully,
+                IsOldApiSuccessful = oldApiResponse.player != null && oldApiResponse.game != null
             };
 
-            response.achievements = newApiResponse.playerStats.achievements
+            response.achievements = new List<Models.ApiResponse.Achievement>();
+
+            if(response.IsNewApiSuccessful && newApiResponse.playerStats != null && newApiResponse.playerStats.achievements != null)
+            {
+                response.achievements = newApiResponse.playerStats.achievements
                 .GroupJoin(
                 oldApiResponse.achievements.achievements,
                     newApiAchievement => newApiAchievement.apiName.ToLower(),
-                    oldApiAchievement => oldApiAchievement.apiname.ToLower(),
+                    oldApiAchievement => (oldApiAchievement != null ? oldApiAchievement.apiname.ToLower() : ""),
                     (newApiAchv, oldApiAchv) => new
                     {
                         newApiAchievement = newApiAchv,
@@ -110,9 +139,9 @@ namespace WhatToPlay.API.Controllers
                     description = grp.oldApiAchievement?.description,
                     iconClosed = grp.oldApiAchievement?.iconClosed,
                     iconOpen = grp.oldApiAchievement?.iconOpen,
-                    name = grp.oldApiAchievement?.name,
+                    name = grp.oldApiAchievement?.name
                 }).ToList();
-
+            }
 
             return response;
         }

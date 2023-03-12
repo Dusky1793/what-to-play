@@ -16,20 +16,23 @@
 
 body {
   background-color: rgb(51, 51, 51);
+  font-family: "Motiva Sans", Sans-serif;
+  font-weight: normal;
+  font-size: 14px;
 }
 
 .gameContainer {
   display: flex;
-  border-style: double;
+  /* border-style: double; */
   margin: 1%;
+  flex-wrap: wrap;
 }
 
 .homeContainer {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  width: 100vw;
 }
 
 .homeContainerItem {

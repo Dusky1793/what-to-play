@@ -10,6 +10,7 @@
         public string steamId { get; set; }
         public string gameName { get; set; }
         public IEnumerable<Achievement> achievements { get; set; }
+        public bool success { get; set; }
     }
 
     public class Achievement

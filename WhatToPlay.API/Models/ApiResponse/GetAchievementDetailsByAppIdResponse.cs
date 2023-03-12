@@ -14,6 +14,15 @@ namespace WhatToPlay.API.Models.ApiResponse
         public string gameLogo { get; set; }
         public string gameLogoSmall { get; set; }
         public List<Achievement> achievements { get; set; }
+        public bool IsOldApiSuccessful { get; set; }
+        public bool IsNewApiSuccessful { get; set; }
+        public double numOfCompletedAchievements => achievements != null ? achievements.Where(ac => ac.achieved).Count() : 0;
+        public double numOfIncompleteAchievements => achievements != null ? achievements.Where(ac => !ac.achieved).Count() : 0;
+        public double numOfTotalGameAchievements => achievements != null ? achievements.Count : 0;
+        public double achievementPercentage =>
+            numOfTotalGameAchievements != 0 ?
+            Math.Round((numOfCompletedAchievements / numOfTotalGameAchievements) * 100, 0) :
+            -1;
     }
 
     public class Achievement

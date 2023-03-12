@@ -13,9 +13,9 @@ function Games() {
                 setGames(result.response.games);
             });
     }, []);
-    
+
     return (
-        <div>
+        <div class="gameContainer">
             {games.map(game => {
                 return (
                     <GameContainer gameDetails={game} />
