@@ -11,7 +11,7 @@ function Authenticate() {
         const steamOpenIdUrl = searchParams.get("openid.claimed_id").split("/");
         const steamId = steamOpenIdUrl[5];
 
-        fetch(`http://localhost:5220/Encryption/EncryptSteamId`, {
+        fetch(`${process.env.REACT_APP_API_URL}/Encryption/EncryptSteamId`, {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',

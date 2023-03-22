@@ -13,12 +13,12 @@ function Home() {
     };
 
     const generateSteamLoginUrl = (callbackUrl) => {
-        const STEAM_LOGIN = "https://steamcommunity.com/openid/login";
+        const STEAM_LOGIN = `${process.env.REACT_APP_STEAM_COMMUNITY_URL}/openid/login`;
         const params = {
             "openid.ns": "http://specs.openid.net/auth/2.0",
             "openid.mode": "checkid_setup",
             "openid.return_to": callbackUrl,
-            "openid.realm": "http://localhost:3000",
+            "openid.realm": process.env.REACT_APP_ROOT_URL,
             "openid.identity": "http://specs.openid.net/auth/2.0/identifier_select",
             "openid.claimed_id": "http://specs.openid.net/auth/2.0/identifier_select",
         };
@@ -28,7 +28,7 @@ function Home() {
     };
     
     const loginClick = () => {
-        window.location.replace(generateSteamLoginUrl("http://localhost:3000/Authenticate"));
+        window.location.replace(generateSteamLoginUrl(`${process.env.REACT_APP_ROOT_URL}/Authenticate`));
     };
 
     return (

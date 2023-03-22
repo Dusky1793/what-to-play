@@ -3,9 +3,8 @@ import { useState, useEffect } from "react";
 import '../style/GameContainer.css';
 
 function GameContainer(props) {
-    const getImageUrl = () =>{
+    const getImageUrl = (imgIconUrl) =>{
         const appId = props.gameDetails.appId;
-        const imgIconUrl = props.gameDetails.img_Icon_Url;
         const imgUrl = `http://media.steampowered.com/steamcommunity/public/images/apps/${appId}/${imgIconUrl}.jpg`;
         return imgUrl;
     };
@@ -15,9 +14,8 @@ function GameContainer(props) {
     useEffect(() => {
         const steamId = localStorage.getItem("steamId");
         const appId = props.gameDetails.appId;
-        console.log(appId);
 
-        fetch(`http://localhost:5220/Steam/GetAchievementDetailsByAppId?encryptedSteamId=${steamId}&appId=${appId}`)
+        fetch(`${process.env.REACT_APP_API_URL}/Steam/GetAchievementDetailsByAppId?encryptedSteamId=${steamId}&appId=${appId}`)
         .then(res => res.json())
         .then((result) => {
             setGameDetails(result);
@@ -26,13 +24,16 @@ function GameContainer(props) {
 
     return (
         <div class="gameItem">
-            <div class="gameItemImg">
-                <img src={getImageUrl()} />
+            {/* <div>
+                    <img src={gameDetails.gameLogo} />
+                </div> */}
+            <div class="gameItemImgContainer">
+                <img class="gameItemImg" src={getImageUrl(props.gameDetails.img_Icon_Url)} />
             </div>
             <div class="gameDetails">
                 <div class="gameTitle">{props.gameDetails.name}</div>
-                <div>{props.gameDetails.playtime_Forever_Hours}</div>
-                <div>{gameDetails.achievementPercentage === -1 ? "---" : `${gameDetails.achievementPercentage}% Achieved`}</div>
+                <div>{props.gameDetails.playtime_Forever_Hours} Hours Played</div>
+                <div>{gameDetails === undefined || gameDetails.achievementPercentage === undefined || gameDetails.achievementPercentage === -1 ? "---" : `${gameDetails.achievementPercentage}% Achieved`}</div>
             </div>
         </div>
     );

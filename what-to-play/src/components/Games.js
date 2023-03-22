@@ -7,7 +7,7 @@ function Games() {
 
     useEffect(() => {
         const steamId = localStorage.getItem("steamId");
-        fetch(`http://localhost:5220/Steam/GetAllOwnedGames?encryptedSteamId=${steamId}`)
+        fetch(`${process.env.REACT_APP_API_URL}/Steam/GetAllOwnedGames?encryptedSteamId=${steamId}`)
             .then(res => res.json())
             .then((result) => {
                 setGames(result.response.games);
