@@ -2,10 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-import Home from './components/Home';
 import Games from './components/Games';
 import Authenticate from './components/auth/Authenticate';
-import { BrowserRouter, createBrowserRouter, RouterProvider } from "react-router-dom"
+import { createBrowserRouter, RouterProvider } from "react-router-dom"
+
+import { Provider } from 'react-redux';
+import store from './redux/store'
 
 const router = createBrowserRouter([
  { path: "/", element: <App /> },
@@ -16,7 +18,9 @@ const router = createBrowserRouter([
 const root = ReactDOM.createRoot(document.getElementById("root"))
 root.render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <Provider store={store}>
+      <RouterProvider router={router} />
+    </Provider>
   </React.StrictMode>
 )
 
