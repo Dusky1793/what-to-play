@@ -1,0 +1,53 @@
+.gameItem {
+    display: flex;
+    border: 3px;
+    border-style: solid;
+    border-radius: 10px;
+    border-color: rgb(28, 30, 39);
+    background-color: rgb(37, 40, 47);
+    margin: 5px;
+    padding: 5px;
+    width: 15%;
+    height: auto;
+    min-height: 20px;
+    min-width: 170px;
+    color: #ffffff;
+    overflow: auto;
+  }
+  
+  .gameItem:hover, .gameItem:focus, .gameItem:active {
+    background-color: rgb(42, 48, 61);
+  }
+
+.gameItemImgContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px;
+}
+
+.gameItemImg {
+  height: 50px;
+  border-radius: 50%;
+}
+
+.gameDetails {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 10px;
+    width: 100%;
+    color: darkgray;
+}
+
+.gameTitle {
+    border-bottom: 0px;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-style: solid;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 16px;
+    color: white;
+}
