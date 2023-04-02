@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import '../style/GameContainer.css';
 import { useAppDispatch, useAppSelector } from "../hooks/hooks";
 import {
-    updateGameAchievementDetailsByAppId
+    updateGameAchievementDetailsByAppId,
+    setSelectedGameByAppId
 } from '../redux/slices/gamesSlice';
 
 interface GameDetails {
@@ -36,11 +37,15 @@ function GameContainer(props:GameContainerProps) {
         });
     }, []);
 
+    const setAsSelectedGame = () => {
+        dispatch(setSelectedGameByAppId(appId));
+    };
+
     return (
-        <div className="gameItem">
+        <div className="gameItem" onClick={setAsSelectedGame}>
             {/* <div>
-                    <img src={gameDetails.gameLogo} />
-                </div> */}
+                        <img src={gameDetails.gameLogo} />
+                    </div> */}
             <div className="gameItemImgContainer">
                 <img className="gameItemImg" src={getImageUrl(game?.img_Icon_Url)} />
             </div>
@@ -48,9 +53,9 @@ function GameContainer(props:GameContainerProps) {
                 <div className="gameTitle">{game?.name}</div>
                 <div>{game?.playtime_Forever_Hours} Hours Played</div>
                 <div>
-                    {game === undefined || game.achievementDetails === undefined || 
-                     game.achievementDetails?.achievementPercentage === undefined || 
-                     game.achievementDetails?.achievementPercentage === "-1" ? "---" : `${game.achievementDetails?.achievementPercentage}% Achieved`}
+                    {game === undefined || game.achievementDetails === undefined ||
+                        game.achievementDetails?.achievementPercentage === undefined ||
+                        game.achievementDetails?.achievementPercentage === "-1" ? "---" : `${game.achievementDetails?.achievementPercentage}% Achieved`}
                 </div>
             </div>
         </div>
