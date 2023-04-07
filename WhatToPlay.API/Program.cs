@@ -6,8 +6,9 @@ var builder = WebApplication.CreateBuilder(args);
 const string CORS_POLICY_allowedSpecificOrigins = "_allowedSpecificOrigins";
 
 // Add services to the container.
-builder.Services.AddTransient<IHttpClientService, SteamHttpClientService>();
+builder.Services.AddScoped<IHttpClientService, SteamHttpClientService>();
 builder.Services.AddTransient<IEncryptionService, EncryptionService>();
+builder.Services.AddScoped<ISteamService, SteamService>();
 builder.Services.AddControllers();
 
 builder.Services.AddCors(options =>

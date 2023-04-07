@@ -1,4 +1,6 @@
-﻿using WhatToPlay.API.Interfaces;
+﻿using System.Linq;
+using WhatToPlay.API.Interfaces;
+using WhatToPlay.API.Models;
 
 namespace WhatToPlay.API.Services
 {
@@ -6,36 +8,59 @@ namespace WhatToPlay.API.Services
     {
         private readonly IConfiguration _configuration;
         private readonly string STEAM_API_KEY;
+        private readonly string STEAM_API_BASE_ADDRESS;
+        private readonly string STEAM_OLD_API_BASE_ADDRESS;
 
         public SteamHttpClientService(IConfiguration configuration)
         {
             _configuration = configuration;
+
+            if(_configuration == null)
+            {
+                throw new Exception("IConfiguration cannot be null.");
+            }
+
             STEAM_API_KEY = _configuration["SteamApiKey"];
+            STEAM_API_BASE_ADDRESS = _configuration["SteamApiBaseUrl"];
+            STEAM_OLD_API_BASE_ADDRESS = _configuration["OldSteamApiBaseUrl"];
         }
 
-        public Task<string> SendRequest(string endPoint, string steamId, string[] extraParams = null)
+        public Task<string> SendRequest(string endPoint, string steamId, RequestParamsOptions extraParamsOptions = null)
         {
-            var baseAddress = _configuration["SteamApiBaseUrl"];
             var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri(baseAddress);
-            var requestUrl = $"http://api.steampowered.com/{endPoint}?key={STEAM_API_KEY}&steamid={steamId}{(extraParams != null && extraParams.Length > 0 ? $"&{String.Join("&", extraParams)}" : string.Empty)}";
-            
+            httpClient.BaseAddress = new Uri(STEAM_API_BASE_ADDRESS);
+
+            var extraParamsSubUrl = BuildExtraParamsSubUrl(extraParamsOptions);
+
+            var requestUrl = $"{STEAM_API_BASE_ADDRESS}{endPoint}?key={STEAM_API_KEY}&steamid={steamId}{extraParamsSubUrl}";
+
             var response = httpClient.GetStringAsync(requestUrl);
 
             return response;
         }
 
-        public Task<string> SendOldApiRequest(string url, string[] extraParams = null)
+        public Task<string> SendOldApiRequest(string endPoint, RequestParamsOptions extraParamsOptions = null)
         {
-            var baseAddress = _configuration["OldSteamApiBaseUrl"];
-
-
             var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri(baseAddress);
+            httpClient.BaseAddress = new Uri(STEAM_OLD_API_BASE_ADDRESS);
 
-            var response = httpClient.GetStringAsync(url);
+            var extraParamsSubUrl = BuildExtraParamsSubUrl(extraParamsOptions);
+
+            var requestUrl = $"{STEAM_OLD_API_BASE_ADDRESS}{endPoint}{extraParamsSubUrl}";
+
+            var response = httpClient.GetStringAsync(requestUrl);
 
             return response;
+        }
+
+        private string BuildExtraParamsSubUrl(RequestParamsOptions requestParamsOptions)
+        {
+            if (requestParamsOptions == null || requestParamsOptions.ExtraParams == null || requestParamsOptions.ExtraParams.Length <= 0)
+            {
+                return string.Empty;
+            }
+
+            return $"&{String.Join(requestParamsOptions.Delimeter, requestParamsOptions.ExtraParams)}";
         }
     }
 }
