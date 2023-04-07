@@ -1,43 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
+import {
+    IGame, 
+    IPayload_updateGameAchievementDetailsByAppId, 
+    IGamesState 
+} from "../../interfaces/Interfaces";
 
-interface Achievement {
-    name?: string;
-    apiName?: string;
-    achieved?: boolean;
-    achieved_OldApi?: boolean;
-    description?: string;
-    iconClosed?: string;
-    iconOpen?: string;
-    unlocktime?: string;
-}
 
-interface AchievementDetails {
-    achievementPercentage?: string;
-    achievement?: Achievement[];
-}
-
-interface Game {
-    appId: string;
-    name?: string;
-    img_Icon_Url?: string;
-    achievementDetails?: AchievementDetails;
-    playtime_Forever_Hours?: string;
-    playtime_Forever?: string;
-    rtime_Last_Played_DateTime?: Date;
-    isSelected?: boolean;
-}
-
-interface Payload_updateGameAchievementDetailsByAppId {
-    appId: string;
-    achievementDetails: any
-}
-
-interface GamesState {
-    games: Game[];
-}
-
-const initialState: GamesState = {
+const initialState: IGamesState = {
     games: []
 }
 
@@ -46,10 +16,10 @@ export const gamesSlice = createSlice({
     name: 'games',
     initialState,
     reducers: {
-        setGames: (state, action: PayloadAction<Game[]>) => {
+        setGames: (state, action: PayloadAction<IGame[]>) => {
             state.games = action.payload;
         },
-        updateGameAchievementDetailsByAppId: (state, action: PayloadAction<Payload_updateGameAchievementDetailsByAppId>) => {
+        updateGameAchievementDetailsByAppId: (state, action: PayloadAction<IPayload_updateGameAchievementDetailsByAppId>) => {
             const game = state.games.find(g => g.appId === action.payload.appId);
             if(game != undefined) {
                 game.achievementDetails = action.payload.achievementDetails;

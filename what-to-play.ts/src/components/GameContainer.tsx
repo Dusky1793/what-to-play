@@ -7,45 +7,55 @@ import {
     setSelectedGameByAppId
 } from '../redux/slices/gamesSlice';
 
-interface GameDetails {
+interface PropsGameContainer {
     appId: string;
 }
 
-interface GameContainerProps {
-    gameDetails: GameDetails;
-}
-
-function GameContainer(props:GameContainerProps) {
-    const appId = props.gameDetails.appId;
+function GameContainer(props: PropsGameContainer) {
+    const appId = props.appId;
     const getImageUrl = (imgIconUrl?: string) =>{
         const imgUrl = `http://media.steampowered.com/steamcommunity/public/images/apps/${appId}/${imgIconUrl}.jpg`;
         return imgUrl;
     };
 
     const dispatch = useAppDispatch();
-    const game = useAppSelector(state => state.games.games.find(g => g.appId === props.gameDetails.appId));
+    const game = useAppSelector(state => state.games.games.find(g => g.appId === appId));
 
-    useEffect(() => {
+    const getPartialGameDetails = () => {
         const steamId = localStorage.getItem("steamId");
 
-        fetch(`${process.env.REACT_APP_API_URL}/Steam/GetAchievementDetailsByAppId?encryptedSteamId=${steamId}&appId=${appId}`)
+        fetch(`${process.env.REACT_APP_API_URL}/Steam/GetPartialAchievementDetailsByAppId?encryptedSteamId=${steamId}&appId=${appId}`)
         .then(res => res.json())
         .then((result) => {
             dispatch(updateGameAchievementDetailsByAppId({ 
                 appId: appId,
                 achievementDetails : result }));
         });
-    }, []);
+    }
+
+    const getFullGameDetails = () => {
+        const steamId = localStorage.getItem("steamId");
+
+        fetch(`${process.env.REACT_APP_API_URL}/Steam/GetFullAchievementDetailsByAppId?encryptedSteamId=${steamId}&appId=${appId}`)
+        .then(res => res.json())
+        .then((result) => {
+            dispatch(updateGameAchievementDetailsByAppId({ 
+                appId: appId,
+                achievementDetails : result }));
+        });
+    };
 
     const setAsSelectedGame = () => {
+        getFullGameDetails();
         dispatch(setSelectedGameByAppId(appId));
     };
+    
+    useEffect(() => {
+        getPartialGameDetails();
+    }, []);
 
     return (
         <div className="gameItem" onClick={setAsSelectedGame}>
-            {/* <div>
-                        <img src={gameDetails.gameLogo} />
-                    </div> */}
             <div className="gameItemImgContainer">
                 <img className="gameItemImg" src={getImageUrl(game?.img_Icon_Url)} />
             </div>

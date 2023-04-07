@@ -7,6 +7,7 @@ import {
     getSelectedGame
 } from '../redux/slices/gamesSlice';
 import { useAppDispatch, useAppSelector } from "../hooks/hooks";
+import GameDetailsContainer from "./GameDetailsContainer";
 
 function Games() {
     const games = useAppSelector(selectAllGames);
@@ -22,34 +23,37 @@ function Games() {
             });
     }, []);
 
+    const renderGameContainers = () => {
+        return <>
+            {[...games].sort((g1, g2) => {
+                if (g1 === undefined ||
+                    g2 === undefined ||
+                    g1.achievementDetails === undefined ||
+                    g2.achievementDetails === undefined) {
+                    return -1;
+                }
+
+                if (!g1.achievementDetails.achievementPercentage) {
+                    return 1;
+                }
+
+
+                if (!g2.achievementDetails.achievementPercentage) {
+                    return -1;
+                }
+
+                return g1.achievementDetails.achievementPercentage > g2.achievementDetails.achievementPercentage ? -1 : 1;
+            }).map(game => <GameContainer appId={game.appId} />)}</>
+    };
+
     return (
         <div className="gameContainer">
-            <div>
-                {[...games].sort((g1, g2) => {
-                    if (g1 === undefined ||
-                        g2 === undefined ||
-                        g1.achievementDetails === undefined ||
-                        g2.achievementDetails === undefined) {
-                        return -1;
-                    }
-
-                    if (!g1.achievementDetails.achievementPercentage) {
-                        return 1;
-                    }
-
-
-                    if (!g2.achievementDetails.achievementPercentage) {
-                        return -1;
-                    }
-
-                    return g1.achievementDetails.achievementPercentage > g2.achievementDetails.achievementPercentage ? -1 : 1;
-                }).map(game => <GameContainer gameDetails={game} />)}
+            <div className="gameContainerList">
+                {renderGameContainers()}
             </div>
-            { selectedGame ?  
-            <div>
-                Selected Game: {selectedGame.name}
-            </div> : "" }
-           
+            <div className="gameDetailsContainerList">
+                {selectedGame ? <GameDetailsContainer game={selectedGame} /> : ""}
+            </div>
         </div>
     );
 }
