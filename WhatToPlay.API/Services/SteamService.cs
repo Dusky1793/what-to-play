@@ -13,6 +13,7 @@ namespace WhatToPlay.API.Services
         private IEncryptionService _encryptionService;
         private IConfiguration _configuration;
         private readonly int _apiMaxRetryAttempts;
+        private readonly int _apiRetryDelayMs;
 
         public SteamService(IHttpClientService httpClientService, IEncryptionService encryption, IConfiguration configuration)
         {
@@ -24,11 +25,18 @@ namespace WhatToPlay.API.Services
             {
                 _apiMaxRetryAttempts = 3;
             }
+
+            if (!int.TryParse(_configuration["ApiRetryDelayMs"], out _apiRetryDelayMs))
+            {
+                _apiRetryDelayMs = 3000;
+            }
         }
 
-        public GetAllOwnedGamesResponse GetAllOwnedGamesBySteamIdWithRetry(string encryptedSteamId, int? maxRetry = null)
+        public GetAllOwnedGamesResponse GetAllOwnedGamesBySteamIdWithRetry(string encryptedSteamId, int? maxRetry = null, int? retryDelayMs = null)
         {
-            return ExecuteWithRetry(() => GetAllOwnedGamesBySteamId(encryptedSteamId), maxRetry ?? _apiMaxRetryAttempts);
+            return ExecuteWithRetry(() => GetAllOwnedGamesBySteamId(encryptedSteamId), 
+                maxRetry ?? _apiMaxRetryAttempts,
+                retryDelayMs ?? _apiRetryDelayMs);
         }
 
         public GetAllOwnedGamesResponse GetAllOwnedGamesBySteamId(string encryptedSteamId)
@@ -52,9 +60,11 @@ namespace WhatToPlay.API.Services
             return response;
         }
 
-        public GetAchievementDetailsByAppIdResponse GetPartialAchievementDetailsByAppIdWithRetry(string encryptedSteamId, string appId, int? maxRetry = null)
+        public GetAchievementDetailsByAppIdResponse GetPartialAchievementDetailsByAppIdWithRetry(string encryptedSteamId, string appId, int? maxRetry = null, int? retryDelayMs = null)
         {
-            return ExecuteWithRetry(() => GetPartialAchievementDetailsByAppId(encryptedSteamId, appId), maxRetry ?? _apiMaxRetryAttempts);
+            return ExecuteWithRetry(() => GetPartialAchievementDetailsByAppId(encryptedSteamId, appId),
+                maxRetry ?? _apiMaxRetryAttempts,
+                retryDelayMs ?? _apiRetryDelayMs);
         }
 
         public GetAchievementDetailsByAppIdResponse GetPartialAchievementDetailsByAppId(string encryptedSteamId, string appId)
@@ -105,122 +115,107 @@ namespace WhatToPlay.API.Services
             return response;
         }
 
-        public GetAchievementDetailsByAppIdResponse GetFullAchievementDetailsByAppIdWithRetry(string encryptedSteamId, string appId, int? maxRetry = null)
+        public GetAchievementDetailsByAppIdResponse GetFullAchievementDetailsByAppIdWithRetry(string encryptedSteamId, string appId, int? maxRetry = null, int? retryDelayMs = null)
         {
-            return ExecuteWithRetry(() => GetFullAchievementDetailsByAppId(encryptedSteamId, appId), maxRetry ?? _apiMaxRetryAttempts);
+            return ExecuteWithRetry(() => GetFullAchievementDetailsByAppId(encryptedSteamId, appId), 
+                maxRetry ?? _apiMaxRetryAttempts,
+                retryDelayMs ?? _apiRetryDelayMs);
         }
 
         public GetAchievementDetailsByAppIdResponse GetFullAchievementDetailsByAppId(string encryptedSteamId, string appId)
         {
-            try
-            {
-                var steamId = _encryptionService.Decrypt(encryptedSteamId);
+            var steamId = _encryptionService.Decrypt(encryptedSteamId);
 
-                var resultNewApi = _httpClientService.SendRequest("ISteamUserStats/GetPlayerAchievements/v0001/", steamId, new RequestParamsOptions
+            var resultNewApi = _httpClientService.SendRequest("ISteamUserStats/GetPlayerAchievements/v0001/", steamId, new RequestParamsOptions
+            {
+                Delimeter = "&",
+                ExtraParams = new string[]
                 {
-                    Delimeter = "&",
-                    ExtraParams = new string[]
-                    {
                     $"appid={appId}"
-                    }
-                });
-
-                var resultOldApi = _httpClientService.SendOldApiRequest($"profiles/{steamId}/stats/{appId}/?xml=1");
-
-                try
-                {
-                    Task.WaitAll(resultNewApi, resultOldApi);
                 }
-                catch (HttpRequestException ex) { }
-                catch (Exception ex) { }
+            });
 
-                // implement a re-try for the old-api
+            var resultOldApi = _httpClientService.SendOldApiRequest($"profiles/{steamId}/stats/{appId}/?xml=1");
 
-                string newApiResult = string.Empty;
-                if (resultNewApi.IsCompletedSuccessfully)
-                {
-                    newApiResult = resultNewApi.Result;
-                }
+            Task.WaitAll(resultNewApi, resultOldApi);
 
-                // deserialize old api response (xml)
-                var xmlSerializer = new XmlSerializer(typeof(GetOldApiPlayerStatsResponse));
+            // implement a re-try for the old-api
 
-                var oldApiResponse = new GetOldApiPlayerStatsResponse()
-                {
-                    achievements = new OldApiAchievements
-                    {
-                        achievements = new List<OldApiAchievement>()
-                    }
-                };
-                if (resultOldApi.IsCompletedSuccessfully) // the old api doesn't give a BAD_REQUEST upon failure
-                {
-                    var oldApiResult = resultOldApi.Result;
-                    using (var reader = new StringReader(oldApiResult))
-                    {
-                        try
-                        {
-                            oldApiResponse = (GetOldApiPlayerStatsResponse)xmlSerializer.Deserialize(reader);
-                        }
-                        catch (Exception ex) { } // suppress parse exception, sometimes steam would fail returing data inconsistently
-                    }
-                }
-
-                // deserialize new api response (json)
-                var newApiResponse = JsonConvert.DeserializeObject<ISteamUserStatsGetPlayerAchievementsResponse>(newApiResult);
-
-                // left join details from the new and old api responses to form the final response
-                var response = new GetAchievementDetailsByAppIdResponse
-                {
-                    gameName = newApiResponse?.playerStats?.gameName,
-                    gameIcon = oldApiResponse?.game?.gameIcon,
-                    gameLink = oldApiResponse?.game?.gameLink,
-                    gameLogo = oldApiResponse?.game?.gameLogo,
-                    gameLogoSmall = oldApiResponse?.game?.gameLogoSmall,
-                    privacyState = oldApiResponse?.privacyState,
-                    visibilityState = oldApiResponse?.visibilityState,
-                    IsNewApiSuccessful = resultNewApi.IsCompletedSuccessfully,
-                    IsOldApiSuccessful = oldApiResponse.player != null && oldApiResponse.game != null
-                };
-
-                response.achievements = new List<Models.ApiResponse.Achievement>();
-
-                if (response.IsNewApiSuccessful && newApiResponse.playerStats != null && newApiResponse.playerStats.achievements != null)
-                {
-                    response.achievements = newApiResponse.playerStats.achievements
-                    .GroupJoin(
-                    oldApiResponse.achievements.achievements,
-                        newApiAchievement => newApiAchievement.apiName.ToLower(),
-                        oldApiAchievement => (oldApiAchievement != null ? oldApiAchievement.apiname.ToLower() : ""),
-                        (newApiAchv, oldApiAchv) => new
-                        {
-                            newApiAchievement = newApiAchv,
-                            oldApiAchievement = oldApiAchv.SingleOrDefault()
-                        }
-                    ).Select(grp => new Models.ApiResponse.Achievement
-                    {
-                        achieved = grp.newApiAchievement.achieved,
-                        apiName = grp.newApiAchievement.apiName,
-                        unlocktime = grp.newApiAchievement.unlocktime,
-
-                        achieved_OldApi = grp.oldApiAchievement?.closed,
-                        apiname_OldApi = grp.oldApiAchievement?.apiname,
-                        description = grp.oldApiAchievement?.description,
-                        iconClosed = grp.oldApiAchievement?.iconClosed,
-                        iconOpen = grp.oldApiAchievement?.iconOpen,
-                        name = grp.oldApiAchievement?.name
-                    }).OrderByDescending(ac => ac.unlocktime_DateTime).ToList();
-                }
-
-                return response;
-            }
-            catch(Exception exc)
+            string newApiResult = string.Empty;
+            if (resultNewApi.IsCompletedSuccessfully)
             {
-                // implement logging
-                return null;
+                newApiResult = resultNewApi.Result;
             }
+
+            // deserialize old api response (xml)
+            var xmlSerializer = new XmlSerializer(typeof(GetOldApiPlayerStatsResponse));
+
+            var oldApiResponse = new GetOldApiPlayerStatsResponse()
+            {
+                achievements = new OldApiAchievements
+                {
+                    achievements = new List<OldApiAchievement>()
+                }
+            };
+            if (resultOldApi.IsCompletedSuccessfully) // the old api doesn't give a BAD_REQUEST upon failure
+            {
+                var oldApiResult = resultOldApi.Result;
+                using (var reader = new StringReader(oldApiResult))
+                {
+                    oldApiResponse = (GetOldApiPlayerStatsResponse)xmlSerializer.Deserialize(reader);
+                }
+            }
+
+            // deserialize new api response (json)
+            var newApiResponse = JsonConvert.DeserializeObject<ISteamUserStatsGetPlayerAchievementsResponse>(newApiResult);
+
+            // left join details from the new and old api responses to form the final response
+            var response = new GetAchievementDetailsByAppIdResponse
+            {
+                gameName = newApiResponse?.playerStats?.gameName,
+                gameIcon = oldApiResponse?.game?.gameIcon,
+                gameLink = oldApiResponse?.game?.gameLink,
+                gameLogo = oldApiResponse?.game?.gameLogo,
+                gameLogoSmall = oldApiResponse?.game?.gameLogoSmall,
+                privacyState = oldApiResponse?.privacyState,
+                visibilityState = oldApiResponse?.visibilityState,
+                IsNewApiSuccessful = resultNewApi.IsCompletedSuccessfully,
+                IsOldApiSuccessful = oldApiResponse.player != null && oldApiResponse.game != null
+            };
+
+            response.achievements = new List<Models.ApiResponse.Achievement>();
+
+            if (response.IsNewApiSuccessful && newApiResponse.playerStats != null && newApiResponse.playerStats.achievements != null)
+            {
+                response.achievements = newApiResponse.playerStats.achievements
+                .GroupJoin(
+                oldApiResponse.achievements.achievements,
+                    newApiAchievement => newApiAchievement.apiName.ToLower(),
+                    oldApiAchievement => (oldApiAchievement != null ? oldApiAchievement.apiname.ToLower() : ""),
+                    (newApiAchv, oldApiAchv) => new
+                    {
+                        newApiAchievement = newApiAchv,
+                        oldApiAchievement = oldApiAchv.SingleOrDefault()
+                    }
+                ).Select(grp => new Models.ApiResponse.Achievement
+                {
+                    achieved = grp.newApiAchievement.achieved,
+                    apiName = grp.newApiAchievement.apiName,
+                    unlocktime = grp.newApiAchievement.unlocktime,
+
+                    achieved_OldApi = grp.oldApiAchievement?.closed,
+                    apiname_OldApi = grp.oldApiAchievement?.apiname,
+                    description = grp.oldApiAchievement?.description,
+                    iconClosed = grp.oldApiAchievement?.iconClosed,
+                    iconOpen = grp.oldApiAchievement?.iconOpen,
+                    name = grp.oldApiAchievement?.name
+                }).OrderByDescending(ac => ac.unlocktime_DateTime).ToList();
+            }
+
+            return response;
         }
 
-        private T? ExecuteWithRetry<T>(Func<T> logic, int maxRetry)
+        private T? ExecuteWithRetry<T>(Func<T> logic, int maxRetry, int delayMs)
         {
             var retryAttempts = 0;
 
@@ -234,13 +229,14 @@ namespace WhatToPlay.API.Services
                 {
                     // implement logging
                     retryAttempts++;
+                    Task.Delay(delayMs);
                 }
             }
 
             return default(T);
         }
 
-        private void ExecuteWithRetry(Action logic, int maxRetry)
+        private void ExecuteWithRetry(Action logic, int maxRetry, int delayMs)
         {
             var retryAttempts = 0;
             var isSuccessful = false;
@@ -256,6 +252,7 @@ namespace WhatToPlay.API.Services
                 {
                     // implement logging
                     retryAttempts++;
+                    Task.Delay(delayMs);
                 }
             }
         }

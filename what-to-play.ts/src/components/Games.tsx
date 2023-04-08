@@ -46,14 +46,20 @@ function Games() {
             }).map(game => <GameContainer appId={game.appId} key={game.appId}/>)}</>
     };
 
+    const renderGameDetailsContainer = () => {
+        if(selectedGame) {
+            return <div className="gameDetailsContainerList">{selectedGame ? <GameDetailsContainer game={selectedGame} /> : ""}</div>;
+        }
+
+        else return "";
+    };
+
     return (
         <div className="gameContainer">
             <div className="gameContainerList">
                 {renderGameContainers()}
             </div>
-            <div className="gameDetailsContainerList">
-                {selectedGame ? <GameDetailsContainer game={selectedGame} /> : ""}
-            </div>
+            {renderGameDetailsContainer()}
         </div>
     );
 }
