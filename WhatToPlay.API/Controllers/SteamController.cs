@@ -1,10 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using System.Xml.Serialization;
 using WhatToPlay.API.Interfaces;
-using WhatToPlay.API.Models;
 using WhatToPlay.API.Models.ApiResponse;
-using WhatToPlay.API.Models.SteamApiResponse;
 
 namespace WhatToPlay.API.Controllers
 {
@@ -26,7 +22,7 @@ namespace WhatToPlay.API.Controllers
         {
             try
             {
-                return _steamService.GetAllOwnedGamesBySteamId(encryptedSteamId);
+                return _steamService.GetAllOwnedGamesBySteamIdWithRetry(encryptedSteamId);
             }
             catch(Exception ex)
             {
@@ -40,7 +36,7 @@ namespace WhatToPlay.API.Controllers
         {
             try
             {
-                return _steamService.GetPartialAchievementDetailsByAppId(encryptedSteamId, appId);
+                return _steamService.GetPartialAchievementDetailsByAppIdWithRetry(encryptedSteamId, appId);
             }
             catch (Exception ex)
             {
@@ -54,7 +50,7 @@ namespace WhatToPlay.API.Controllers
         {
             try
             {
-                return _steamService.GetFullAchievementDetailsByAppId(encryptedSteamId, appId);
+                return _steamService.GetFullAchievementDetailsByAppIdWithRetry(encryptedSteamId, appId);
             }
             catch (Exception ex)
             {
