@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { IGame } from "../interfaces/Interfaces";
+import { IAchievementDetails, IGame } from "../interfaces/Interfaces";
 import { useAppDispatch } from "../hooks/hooks";
 import { updateGameAchievementDetailsByAppId } from "../redux/slices/gamesSlice";
 
@@ -14,24 +14,25 @@ function GameDetailsContainer(props:PropsGameDetailsContainer) {
     const renderAchievements = () => {
         if(game.achievementDetails?.achievements)
         {
-            return <>
+            return <div className="gameDetailsContainerBody">
             {
                 [...game.achievementDetails?.achievements].map(ac => {
                     return (
-                        <div className="gameDetailsAchievementContainer">
+                        <div className="gameDetailsContainerAchievements">
                             <div className="gameDetailsAchievementImgContainer">
-                                <img className="gameDetailsAchievementImg" height={50} width={50} src={ac.achieved ? ac.iconClosed : ac.iconOpen} />
+                                <img className="gameDetailsAchievementImg" src={ac.achieved ? ac.iconClosed : ac.iconOpen} />
                             </div>
                             <div className="gameDetailsAchievement">
                                 <h4>{ac.name}</h4>
-                                <div>description: {ac.description}</div>
-                                <div>unlock time: {ac.unlocktime}</div>
+                                <div>{ac.description}</div>
+                                {/* {ac.achieved && ac.unlocktime_DateTime ? <div>{new Intl.DateTimeFormat("en-GB", { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ac.unlocktime_DateTime))}</div> : ""} */}
+                                {ac.achieved && ac.unlocktime_DateTime ? <div>{new Date(ac.unlocktime_DateTime).toLocaleString()}</div> : ""}
                             </div>
                         </div>
                     );
                 })
             }
-            </>;
+            </div>;
         }
 
         return "";
@@ -45,7 +46,7 @@ function GameDetailsContainer(props:PropsGameDetailsContainer) {
         .then((result) => {
             dispatch(updateGameAchievementDetailsByAppId({ 
                 appId: game.appId,
-                achievementDetails : result }));
+                achievementDetails : result as IAchievementDetails }));
         });
     };
 
@@ -55,13 +56,11 @@ function GameDetailsContainer(props:PropsGameDetailsContainer) {
                 <div>
                     <input type="button" value={"Refresh"} onClick={refreshGameDetails} />
                 </div>
-                <h1>{game.name}</h1>
-                <h2>{game.playtime_Forever_Hours} Hours</h2>
-                <h2>{game.achievementDetails?.achievementPercentage} %</h2>
+                <h2>{game.name}</h2>
+                <h3>{game.playtime_Forever_Hours} Hours</h3>
+                <h3>{game.achievementDetails?.achievementPercentage} %</h3>
             </div>
-            <div className="gameDetailsContainerAchievements">
-                {renderAchievements()}
-            </div>
+            {renderAchievements()}
         </div>
     );
 }

@@ -186,7 +186,7 @@ namespace WhatToPlay.API.Services
                     iconClosed = grp.oldApiAchievement?.iconClosed,
                     iconOpen = grp.oldApiAchievement?.iconOpen,
                     name = grp.oldApiAchievement?.name
-                }).ToList();
+                }).OrderByDescending(ac => ac.unlocktime_DateTime).ToList();
             }
 
             return response;

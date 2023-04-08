@@ -30,7 +30,7 @@ namespace WhatToPlay.API.Models.ApiResponse
         public string apiName { get; set; }
         public bool achieved { get; set; }
         public string unlocktime { get; set; }
-
+        public DateTime? unlocktime_DateTime => !string.IsNullOrEmpty(unlocktime) ? DateTimeOffset.FromUnixTimeSeconds(long.Parse(unlocktime)).DateTime.ToUniversalTime() : null;
         public bool? achieved_OldApi { get; set; }
         public string iconClosed { get; set; }
         public string iconOpen { get; set; }

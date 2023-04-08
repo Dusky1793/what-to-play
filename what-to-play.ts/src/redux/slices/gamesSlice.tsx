@@ -1,11 +1,16 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
 import {
-    IGame, 
-    IPayload_updateGameAchievementDetailsByAppId, 
-    IGamesState 
+    IGame,
+    IGamesState, 
+    IAchievementDetails
 } from "../../interfaces/Interfaces";
 
+
+interface IPayload_updateGameAchievementDetailsByAppId {
+    appId: string;
+    achievementDetails: IAchievementDetails
+}
 
 const initialState: IGamesState = {
     games: []
@@ -40,7 +45,7 @@ export const gamesSlice = createSlice({
 
 export const {
     setGames, 
-    updateGameAchievementDetailsByAppId, 
+    updateGameAchievementDetailsByAppId,
     setSelectedGameByAppId 
 } = gamesSlice.actions;
 

@@ -43,7 +43,7 @@ function Games() {
                 }
 
                 return g1.achievementDetails.achievementPercentage > g2.achievementDetails.achievementPercentage ? -1 : 1;
-            }).map(game => <GameContainer appId={game.appId} />)}</>
+            }).map(game => <GameContainer appId={game.appId} key={game.appId}/>)}</>
     };
 
     return (

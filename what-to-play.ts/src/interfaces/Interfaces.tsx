@@ -7,10 +7,14 @@ interface IAchievement {
     iconClosed?: string;
     iconOpen?: string;
     unlocktime?: string;
+    unlocktime_DateTime?: Date;
 }
 
 interface IAchievementDetails {
     achievementPercentage?: string;
+    gameLogo?: string;
+    gameLink?: string;
+    gameIcon?: string;
     achievements?: IAchievement[];
 }
 
@@ -25,12 +29,6 @@ interface IGame {
     isSelected?: boolean;
 }
 
-interface IPayload_updateGameAchievementDetailsByAppId {
-    appId: string;
-    achievementDetails: any
-}
-
-
 interface IGamesState {
     games: IGame[];
 }
@@ -39,6 +37,5 @@ export type {
     IAchievement, 
     IAchievementDetails,
     IGame,
-    IPayload_updateGameAchievementDetailsByAppId,
     IGamesState
  }
